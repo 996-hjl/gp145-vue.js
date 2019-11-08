@@ -4,18 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>adv-dy-compoment</title>
+  <title>directive</title>
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lodash@4.13.1/lodash.min.js"></script>
 </head>
 <body>
   <div id="root">
-    <ul>
-      <li @click="handleNavClick('list')">列表</li>
-      <li @click="handleNavClick('detail')">详情</li>
-    </ul>
-    <keep-alive>
-      <component :is="currentComp"></component>
-    </keep-alive>
+    <!-- <input v-focus:aaa.enter.13="title" type="text" value="abc"> -->
+    <div v-font:font-size.bold="'30px'">text</div>
+    <test></test>
+    <test2></test2>
   </div>
   <script type="module" src="./app.js"></script>
 </body>
