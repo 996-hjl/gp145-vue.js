@@ -1,14 +1,28 @@
 <template>
   <div>
-    <div v-if="movieList.length > 0">
+    <div class="coming-list" v-if="type==='comingsoon' && tempList.length > 0">
+      <div 
+        v-for="(value,key) in comingsoonMap"
+        :key="key"
+      >
+        <p class="group-date">{{key}}</p>
+        <MovieItem
+          v-for="(movie,index) in value"
+          :key="movie.id"
+          :movie="movie"
+          :index="index"
+        ></MovieItem>
+      </div>
+    </div>
+    <div v-else-if="type==='intheaters' && intheatersList.length > 0">
       <MovieItem
-        v-for="(movie,index) in movieList"
+        v-for="(movie,index) in intheatersList"
         :key="movie.id"
         :movie="movie"
         :index="index"
       ></MovieItem>
     </div>
-    <van-loading v-else type="spinner" />
+    <van-loading v-if="(type==='comingsoon' && tempList.length === 0) || (type==='intheaters' && intheatersList.length === 0)" type="spinner" />
   </div>
 </template>
 
@@ -23,9 +37,31 @@ import { Loading, Toast } from 'vant'
 Vue.use(Loading).use(Toast)
 
 export default {
+  props: ['type'],
   data() {
     return {
-      movieList: []
+      intheatersList: [],
+      comingsoonMap: {},
+      tempList: []
+    }
+  },
+
+  genData(result) {
+    if (this.type === 'intheaters') {
+      if (this.intheatersList.length === 0) {
+        this.intheatersList = result.movieList
+      } else {
+        this.intheatersList = [
+          ...this.intheatersList,
+          ...result.coming
+        ]
+      }
+    } else {
+      this.tempList = [
+        ...this.tempList,
+        ...result.coming
+      ]
+      this.comingsoonMap = _.groupBy(this.tempList, 'comingTitle')
     }
   },
 
@@ -34,11 +70,29 @@ export default {
   },
 
   async mounted() {
+    var url
+    var offset
+
+    if (this.type === 'intheaters') {
+      url = '/ajax/movieOnInfoList'
+      offset = 12
+    } else {
+      url = '/ajax/comingList'
+      offset = 10
+    }
+
     let result = await get({
-      url: '/ajax/movieOnInfoList?token='
+      url,
+      params: {
+        token: '',
+        ci: 1,
+        limit: 10
+      }
     })
-    this.movieList = result.movieList
-    let movieIds = _.chunk(result.movieIds.slice(12), 10)
+
+    this.$options.genData.call(this, result)
+
+    let movieIds = _.chunk(result.movieIds.slice(offset), 10)
 
     let bScroll = new BScroll('.tab-content', {
       pullUpLoad: true,
@@ -53,15 +107,13 @@ export default {
         let result = await get({
           url: '/ajax/moreComingList',
           params: {
+            ci: 1,
             token: '',
             movieIds: movieIds[page].join(',')
           }
         })
 
-        this.movieList = [
-          ...this.movieList,
-          ...result.coming
-        ]
+        this.$options.genData.call(this, result)
 
         await this.$nextTick()
         bScroll.refresh()
