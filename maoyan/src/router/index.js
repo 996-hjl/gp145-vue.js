@@ -10,6 +10,7 @@ import Comingsoon from 'pages/index/movies/comingsoon/Comingsoon'
 import Theaters from 'pages/index/Theaters'
 import Profile from 'pages/index/Profile'
 import Details from 'pages/details/Details'
+import Test from 'pages/details/Test'
 
 Vue.use(VueRouter)
 
@@ -33,11 +34,13 @@ const routes = [
           {
             path: 'intheaters',
             name: 'intheaters',
+            meta: 1,
             component: Intheaters
           },
           {
             path: 'comingsoon',
             name: 'comingsoon',
+            meta: 2,
             component: Comingsoon
           }
         ]
@@ -59,13 +62,27 @@ const routes = [
     path: '/details',
     name: 'details',
     component: Details
+  },
+
+  {
+    path: '/test',
+    name: 'test',
+    component: Test
   }
 ]
 
 const router = new VueRouter({
   mode: 'history',
   base: process.env.BASE_URL,
-  routes
+  routes,
+  scrollBehavior (to, from, savedPosition) {
+    // return 期望滚动到哪个的位置
+    return {
+      x: 0,
+      y: ~~to.query.pos
+    }
+    // return false
+  }
 })
 
 export default router

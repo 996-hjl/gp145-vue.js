@@ -11,6 +11,7 @@
           :key="movie.id"
           :movie="movie"
           :index="index"
+          :bscroll="bScroll"
         ></MovieItem>
       </div>
     </div>
@@ -20,6 +21,7 @@
         :key="movie.id"
         :movie="movie"
         :index="index"
+        :bscroll="bScroll"
       ></MovieItem>
     </div>
     <van-loading v-if="(type==='comingsoon' && tempList.length === 0) || (type==='intheaters' && intheatersList.length === 0)" type="spinner" />
@@ -42,7 +44,8 @@ export default {
     return {
       intheatersList: [],
       comingsoonMap: {},
-      tempList: []
+      tempList: [],
+      bScroll: null
     }
   },
 
@@ -56,12 +59,14 @@ export default {
           ...result.coming
         ]
       }
+      this.$store.commit('setData', this.intheatersList)
     } else {
       this.tempList = [
         ...this.tempList,
         ...result.coming
       ]
       this.comingsoonMap = _.groupBy(this.tempList, 'comingTitle')
+      this.$store.commit('setData', this.comingsoonMap)
     }
   },
 
@@ -94,7 +99,9 @@ export default {
 
     let movieIds = _.chunk(result.movieIds.slice(offset), 10)
 
-    let bScroll = new BScroll('.tab-content', {
+    // 由于动画播放的原因，不允许给两个的容器定义better-scroll
+    let scrollWrap = '.tab-content.' + this.type
+    this.bScroll = new BScroll(scrollWrap, {
       pullUpLoad: true,
       click: true,
       probeType: 2
@@ -102,7 +109,7 @@ export default {
 
     let page = 0
 
-    bScroll.on('pullingUp', async() => {
+    this.bScroll.on('pullingUp', async() => {
       if (page < movieIds.length) {
         let result = await get({
           url: '/ajax/moreComingList',
@@ -116,7 +123,7 @@ export default {
         this.$options.genData.call(this, result)
 
         await this.$nextTick()
-        bScroll.refresh()
+        this.bScroll.refresh()
         
         page++
       } else {
@@ -126,12 +133,17 @@ export default {
           duration: 1000
         })
       }
-      bScroll.finishPullUp()
+      this.bScroll.finishPullUp()
     })
 
-    bScroll.on('scroll', () => {
-      this.$store.commit('setSticky', bScroll.y < -50)
+    this.bScroll.on('scroll', () => {
+      this.$store.commit('setSticky', this.bScroll.y < -50)
     })
+
+    await this.$nextTick()
+    this.bScroll.scrollTo(0, this.$route.query.pos)
+
+
   }
 }
 
